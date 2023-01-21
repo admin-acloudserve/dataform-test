@@ -1,0 +1,6 @@
+{
+  "name": "fivetran_log",
+  "dependencies": {
+    "@dataform/core": "2.0.1"
+  }
+}
