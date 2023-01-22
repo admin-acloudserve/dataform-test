@@ -5,7 +5,7 @@ config {
 with log as (
 
     select * 
-    from `sample1-328718.fivetran_log.log`
+    from ${constants.SOURCE_PROJECT}.${constants.SOURCE_DATASET}.log
 ),
 
 fields as (
