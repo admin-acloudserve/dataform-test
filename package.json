@@ -1,6 +1,7 @@
 {
   "name": "fivetran_log",
   "dependencies": {
-    "@dataform/core": "2.0.1"
+    "@dataform/core": "2.0.1",
+    "fivetran-log": "https://github.com/dataform-co/dataform-fivetran-log/archive/0.6.tar.gz"
   }
 }

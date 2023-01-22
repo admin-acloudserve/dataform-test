@@ -1,0 +1,8 @@
+config {
+  type: "view"
+}
+
+select * 
+from ${constants.SOURCE_PROJECT}.${constants.SOURCE_DATASET}.connector
+
+
