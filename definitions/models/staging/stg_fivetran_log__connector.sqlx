@@ -26,7 +26,8 @@ final as (
     select 
         connector_id,
         connector_name,
-        -- coalesce(connector_type_id, connector_type) as connector_type,
+        connector_id AS connector_type,
+        -- coalesce(connector_type_id, connector_type) as connector_type, -- does not have connector_type
         connector_type_id,
         destination_id,
         connecting_user_id,
