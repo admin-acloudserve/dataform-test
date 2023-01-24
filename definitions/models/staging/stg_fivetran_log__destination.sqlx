@@ -1,0 +1,24 @@
+config {
+  type: "table"
+}
+
+with destination as (
+
+    select * 
+    from ${constants.SOURCE_PROJECT}.${constants.SOURCE_DATASET}.destination
+),
+
+fields as (
+
+    select
+        id as destination_id,
+        account_id,
+        -- cast(created_at as {{ dbt.type_timestamp() }}) as created_at,
+        created_at,
+        name as destination_name,
+        region
+    from destination
+)
+
+select * 
+from fields
