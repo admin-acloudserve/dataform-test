@@ -13,8 +13,8 @@ fields as (
     select
         id as account_id,
         country,
-        -- cast(created_at as {{ dbt.type_timestamp() }}) as created_at,
-        created_at,
+        -- cast(created_at as {{ dbt.type_timestamp() }}) as created_at, -- in this format 2023-01-13 19:18:13.160732 UTC
+        created_at, -- this does not need to change. 
         name as account_name,
         status
     from account

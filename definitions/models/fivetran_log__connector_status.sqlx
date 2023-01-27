@@ -2,6 +2,17 @@ config {
   type: "table"
 }
 
+js {
+ function bar(foo) {
+    if (foo ) {
+        return `
+        ,STRING_AGG("distinct case when connector_recent_logs.event_type = 'SEVERE' then connector_recent_logs.message_data else null end", "'\\n'") as errors_since_last_completed_sync
+        ,STRING_AGG("distinct case when connector_recent_logs.event_type = 'WARNING' then connector_recent_logs.message_data else null end", "'\\n'") as errors_since_last_completed_sync`;
+    }
+    return 0
+ }
+}
+
 with transformation_removal as (
 
     select *
@@ -21,14 +32,16 @@ connector_log as (
         or event_type = 'WARNING'
         or event_subtype like 'sync%'
 ---------------------------------------------------------------------------NEEDS MORE WORK---------------------------------------------------------------------------
-        -- or (event_subtype = 'status' 
-        --     and {{ fivetran_utils.json_parse(string="message_data", string_path=["status"]) }} = 'RESCHEDULED'
+        or (event_subtype = 'status' 
+            -- and {{ fivetran_utils.json_parse(string="message_data", string_path=["status"]) }} = 'RESCHEDULED'
+            and JSON_QUERY(message_data, '$.status') = 'RESCHEDULED'
             
-        --     and {{ fivetran_utils.json_parse(string="message_data", string_path=["reason"]) }} like '%intended behavior%'
-        --     ) -- for priority-first syncs. these should be captured by event_type = 'WARNING' but let's make sure
-        -- or (event_subtype = 'status' 
-        --     and {{ fivetran_utils.json_parse(string="message_data", string_path=["status"]) }} = 'SUCCESSFUL'
-        -- )
+            -- and {{ fivetran_utils.json_parse(string="message_data", string_path=["reason"]) }} like '%intended behavior%') -- for priority-first syncs. these should be captured by event_type = 'WARNING' but let's make sure
+            and JSON_QUERY(message_data, '$.reason') like '%intended behavior%') -- for priority-first syncs. these should be captured by event_type = 'WARNING' but let's make sure
+        or (event_subtype = 'status' 
+            -- and {{ fivetran_utils.json_parse(string="message_data", string_path=["status"]) }} = 'SUCCESSFUL'
+            and JSON_QUERY(message_data, '$.status') = 'SUCCESSFUL'
+        )
 ---------------------------------------------------------------------------NEEDS MORE WORK---------------------------------------------------------------------------
         -- whole reason is "We have rescheduled the connector to force flush data from the forward sync into your destination. This is intended behavior and means that the connector is working as expected."
 ),
@@ -81,6 +94,7 @@ connector_metrics as (
         max(case when connector_log.event_subtype in ('status', 'sync_end')
 ---------------------------------------------------------------------------NEEDS MORE WORK---------------------------------------------------------------------------
                 -- and {{ fivetran_utils.json_parse(string="connector_log.message_data", string_path=["status"]) }} ='SUCCESSFUL'
+                and JSON_QUERY(connector_log.message_data, '$.status') = 'SUCCESSFUL'
 ---------------------------------------------------------------------------NEEDS MORE WORK---------------------------------------------------------------------------
             then connector_log.created_at else null end) as last_successful_sync_completed_at,
 
@@ -91,7 +105,9 @@ connector_metrics as (
         max(case when connector_log.event_subtype in ('status', 'sync_end')
 ---------------------------------------------------------------------------NEEDS MORE WORK---------------------------------------------------------------------------
                 -- and {{ fivetran_utils.json_parse(string="connector_log.message_data", string_path=["status"]) }} ='RESCHEDULED'
+                and JSON_QUERY(connector_log.message_data, '$.status') = 'RESCHEDULED'
                 -- and {{ fivetran_utils.json_parse(string="connector_log.message_data", string_path=["reason"]) }} like '%intended behavior%'
+                and JSON_QUERY(connector_log.message_data, '$.reason') like '%intended behavior%'
 ---------------------------------------------------------------------------NEEDS MORE WORK---------------------------------------------------------------------------
             then connector_log.created_at else null end) as last_priority_first_sync_completed_at,
                 
@@ -168,7 +184,9 @@ connector_recent_logs as (
         and not (connector_log.event_subtype = 'status' )
 ---------------------------------------------------------------------------NEEDS MORE WORK---------------------------------------------------------------------------
             -- and {{ fivetran_utils.json_parse(string="connector_log.message_data", string_path=["status"]) }} ='RESCHEDULED'
+            and JSON_QUERY(connector_log.message_data, '$.status') = 'RESCHEDULED'
             -- and {{ fivetran_utils.json_parse(string="connector_log.message_data", string_path=["reason"]) }} like '%intended behavior%')
+            and JSON_QUERY(connector_log.message_data, '$.reason') like '%intended behavior%'
 ---------------------------------------------------------------------------NEEDS MORE WORK---------------------------------------------------------------------------
 
     -- {{ dbt_utils.group_by(n=12) }} -- de-duping error messages
@@ -193,10 +211,13 @@ final as (
         connector_recent_logs.set_up_at,
         coalesce(schema_changes.number_of_schema_changes_last_month, 0) as number_of_schema_changes_last_month
  ---------------------------------------------------------------------------NEEDS MORE WORK---------------------------------------------------------------------------       
+        
         -- {% if var('fivetran_log_using_sync_alert_messages', true) %}
         -- , {{ fivetran_utils.string_agg("distinct case when connector_recent_logs.event_type = 'SEVERE' then connector_recent_logs.message_data else null end", "'\\n'") }} as errors_since_last_completed_sync
         -- , {{ fivetran_utils.string_agg("distinct case when connector_recent_logs.event_type = 'WARNING' then connector_recent_logs.message_data else null end", "'\\n'") }} as warnings_since_last_completed_sync
+
         -- {% endif %}
+        ${bar( constants.fivetran_log_using_sync_alert_messages )}
 ---------------------------------------------------------------------------NEEDS MORE WORK---------------------------------------------------------------------------
 
     from connector_recent_logs

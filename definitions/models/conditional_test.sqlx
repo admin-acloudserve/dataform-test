@@ -1,0 +1,22 @@
+config {
+  type: "table"
+}
+
+-- with connector as (
+    
+--     select * 
+--     from ${ ref('fivetran_log__connector_status') }
+-- ),
+
+
+js {
+ const foo = 1;
+ function bar(number){
+     return number+1;
+ }
+}
+
+
+select
+    ${foo} as one,
+    ${bar(foo)} as two
