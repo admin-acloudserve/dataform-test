@@ -3,6 +3,13 @@
  const fivetran_log_using_sync_alert_messages = true
  const fivetran_log_using_transformations = false
  const fivetran_log_using_triggers = true
+ const fivetran_log_using_account_membership = true
  
- module.exports = { SOURCE_DATASET, SOURCE_PROJECT, fivetran_log_using_sync_alert_messages, fivetran_log_using_transformations, fivetran_log_using_triggers };
-//  module.exports = {  };
+ module.exports = { 
+     SOURCE_DATASET, 
+     SOURCE_PROJECT, 
+     fivetran_log_using_sync_alert_messages, 
+     fivetran_log_using_transformations, 
+     fivetran_log_using_triggers, 
+     fivetran_log_using_account_membership 
+};
